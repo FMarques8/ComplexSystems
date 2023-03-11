@@ -251,3 +251,10 @@ def throwing_balls():
         sns.kdeplot(gaussian, label = 'gaussian', bw_adjust = 2)
         plt.legend()
         plt.show()
+
+def main(args):
+    return 0
+
+if __name__ == '__main__':
+    import sys
+    sys.exit(main(sys.argv))
