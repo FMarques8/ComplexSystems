@@ -126,13 +126,13 @@ def task1_2(T: list[int, int] = [[40, 41], [400, 401], [4000, 4001]], N: int = 5
         
         print(f"""Probability condition: {prob_cond}\n
             Mean 0: {mu}\n
-            Variance {tf}: {variance}
+            Variance {np.mean(tf)}: {variance}
             """)
         
         sns.scatterplot(sample_probability, label = 'Sample result', s = 12)
         sns.lineplot(theory, label = 'Theoretical result') # do i have to plot for t and t+1, or the average value??? ASK THIS!!!!!!!!!!!!!!
     plt.grid()
-    plt.xlabel(r"Time $t$")
+    plt.xlabel(r"Position $x$")
     plt.ylabel(r"Probability $\bar{P}(x,t)$")
     plt.show()
 
@@ -194,12 +194,12 @@ def task2(T: list[int, int] = [[40, 41], [400, 401], [4000, 4001]], N: int = 500
         
         print(f"""Probability condition: {prob_cond}\n
             Mean {round(2 * delta * np.mean(tf), 4)}: {mu}\n
-            Variance {tf}: {variance}
+            Variance {np.mean(tf)}: {variance}
             """)
         
         sns.scatterplot(sample_probability, label = 'Sample result', s = 12)
         sns.lineplot(theory, label = 'Theoretical result') # do i have to plot for t and t+1, or the average value??? ASK THIS!!!!!!!!!!!!!!
     plt.grid()
-    plt.xlabel(r"Time $t$")
+    plt.xlabel(r"Position $x$")
     plt.ylabel(r"Probability $\bar{P}(x,t)$")
     plt.show()
