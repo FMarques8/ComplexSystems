@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
-from random import randint
 from math import erf # error function for theoretical survival probability
 
 sns.set_style("darkgrid")
@@ -12,7 +11,7 @@ palette = sns.color_palette()
 # Task 1.1
 
 def jump() -> tuple:
-    val = randint(1,4)
+    val = np.random.randint(1,5)
     
     if val == 1:
         return (0, 1)
@@ -39,31 +38,24 @@ def random_walk_2d(end_time: int) -> tuple[list[int], list[int]]:
         x_data.append(x)
         y_data.append(y)
     
-    return list(zip(x_data, y_data))
+    return x_data, y_data
 
 def task1_1(n: int) -> None:
-    "Simulate and plot n 2D random walks."
+    "Solution of task 1.1."
 
     for _ in range(n):
-        trajectory = random_walk_2d(100)
-        plt.plot(trajectory)
-    plt.xlabel('Position $x$')
-    plt.ylabel('Position $y$')
+        trajectory = random_walk_2d(1000)
+        sns.lineplot(x=trajectory[0], y=trajectory[1], estimator=None)
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
     plt.title('2D Random walks')
-    plt.grid()
     plt.legend(['RW 1', 'RW 2', 'RW 3'])
     plt.show()
 
 ## Task 1.2
 
-def task1_2(T: list[list[int]] = [[50000, 50001]], N: int = 1000) -> None:
-    """Simulate n random walks and compute probability of
-    finding a particle at site x and time tf
-    
-    Args:
-        T - final time to look for the particle
-        n - number of random walks to compute (samples)
-    """
+def task1_2(T: list[list], N: int = 1000) -> None:
+    """Solution of task 1.2."""
     
     for tf in T:
         
@@ -114,7 +106,8 @@ def task1_2(T: list[list[int]] = [[50000, 50001]], N: int = 1000) -> None:
         mu_x = np.sum(list(map(lambda x, prob: x * prob, range(xmin, xmax + 1), sample_probability.values())))
         mu_y = np.sum(list(map(lambda y, prob: y * prob, range(ymin, ymax + 1), sample_probability.values())))
         
-        variance = np.sum(list(map(lambda x, y, prob: (x**2 * prob + y**2 * prob), range(xmin, xmax + 1), range(ymin, ymax + 1), sample_probability.values())))
+        # variance
+        variance = np.sum([(key[0]**2 + key[1]**2) * probability for key, probability in sample_probability.items()])
         
         print(f"""Probability condition: {prob_cond}\n
             Mean 0: {mu_x} = {mu_y}\n
@@ -123,31 +116,36 @@ def task1_2(T: list[list[int]] = [[50000, 50001]], N: int = 1000) -> None:
         
         x = []
         y = []
+        
         for key in sample_probability.keys():
             x.append(key[0])
             y.append(key[1])
         
         # sample and theory 3d plot
         seaborn_plot = plt.axes(projection = '3d')
-        seaborn_plot.scatter3D(x, y, sample_probability.values(), label = 'Sample result', alpha = 1)
-        seaborn_plot.scatter3D(x, y, theory.values(), label = 'Theoretical result', color='orange', alpha = 0.1)
+
+        seaborn_plot.plot3D(x, y, list(sample_probability.values()), label = 'Sample result', alpha = 0.4, linewidth=.5)
+        seaborn_plot.plot3D(x, y, list(theory.values()), label = 'Theoretical result', color='orange', alpha = 0.7, linewidth=1)
         plt.grid()
-        plt.xlabel(r"Position $x$")
-        plt.ylabel(r"Position $y$")
-        seaborn_plot.set_zlabel(r"Probability $\bar{P}(x,t)$")
+        plt.xlabel(r"$x$")
+        plt.ylabel(r"$y$")
+        seaborn_plot.set_zlabel(r"$\bar{P}(x,t)$")
         plt.show()
+
+task1_2([[500,501]], 1000)
 
 # Part 2
 ## Task 2.1
 
-def first_passage_time(boundary: int):
+def first_passage_time(boundary: int) -> int:
+    """Find first passage time of 2d Random Walk with an absorving boundary."""
     
     # Initialize variables
     x = 0
     y = 0
     t = 0
     
-    # Simulate random walk
+    # Simulate random walk until it hits absorving boundary
     while x > boundary:
         tmp = jump()
         x += tmp[0]
@@ -159,13 +157,14 @@ def first_passage_time(boundary: int):
             break
     return t
 
-def get_t_binned(fpt_list: list, bin_w: int):
+def get_t_binned(fpt_list: list, bin_w: int) -> list[list]:
+    """Bins the t domain for task 2.1."""
+
     # binning process
     binned_t = [[fpt_list[0]]] # create list of bins with first fpt
 
     for fpt in fpt_list[1:]:
         for idx, bin in enumerate(binned_t):
-            # print(bin)
             if fpt in range(bin[0], bin[0] + bin_w + 1): # delta_t + 1 to include upper limit
                 binned_t[idx].append(fpt)
                 break # break the loop since if it is in one bin, it cannot be in another, and this also
@@ -175,11 +174,12 @@ def get_t_binned(fpt_list: list, bin_w: int):
         binned_t.sort() # sort list
     return binned_t
 
-def task2_1(N: int):
+def task2_1(N: int) -> None:
+    "Solution of task 2.1."
     
     # constants
     x_0 = 0
-    x_b = -3
+    x_b = -30
     D = 1/4
     
     # Simulation results
@@ -235,3 +235,89 @@ def task2_1(N: int):
 
 # Part 3
 ## Task 3.1
+
+def levy_flight(mu: int, l_max: int, jumps: int) -> list[list[int]]:
+    """Generate levy flights."""
+    
+    trajectory = [[0], [0]] # starting position
+    
+    l_r = lambda r: (1 - r * (1- l_max**(1 - mu)))**(1 / (1 - mu)) # l(r) function
+    
+    for _ in range(jumps):
+        r = np.random.uniform()
+        l = l_r(r)
+        phi = 2 * np.pi * np.random.uniform()
+        old_x = trajectory[0][-1]
+        old_y = trajectory[1][-1] # gets last position → n-1
+        new_x = old_x + l * np.cos(phi)
+        new_y = old_y + l * np.sin(phi)
+        
+        trajectory[0].append(new_x)
+        trajectory[1].append(new_y)
+    
+    return trajectory
+
+def isotropic_random_walk(l: int, jumps: int) -> list[list[int]]:
+    "Generate isotropic 2d random walk with fixed jump length."
+    trajectory = [[0], [0]] # starting position
+    
+    for _ in range(jumps):
+        phi = 2 * np.pi * np.random.uniform()
+        old_x = trajectory[0][-1]
+        old_y = trajectory[1][-1] # gets last position → n-1
+        new_x = old_x + l * np.cos(phi)
+        new_y = old_y + l * np.sin(phi)
+        
+        trajectory[0].append(new_x)
+        trajectory[1].append(new_y)
+    
+    return trajectory
+
+def task3_1() -> None:
+    """Compare Levy flights (variable jump length) with isotropic random walks (fixed jump length)"""
+    
+    mu_list = [1.6, 2, 2.6]
+    l_max = 1000
+    N = 1000
+    
+    # generate isotropic 2d random walk
+    isotropic_rw = isotropic_random_walk(1, N)
+    
+    # plot random walk and levy flights
+    plt.figure(figsize=(13, 8))
+    for mu in mu_list:
+        levy_f = levy_flight(mu, l_max, N)
+        sns.lineplot(x = levy_f[0], y = levy_f[1], marker = 'o', linestyle = 'dashed', label = f'Levy flight, $\mu={mu}$', alpha = 0.6)
+    sns.lineplot(y = isotropic_rw[0], x = isotropic_rw[1], marker = 'o', linestyle = 'dashed', label = 'Isotropic random walk')
+    plt.legend()
+    plt.show()
+
+def task3_2(mu_list: list[float]) -> None:
+    """Function for numerical solution to task 3.2."""
+    
+    l_max = 1000
+    
+    for mu in mu_list:        
+        # normalization constant
+        C = (mu - 1) / (1 - l_max**(1 - mu))
+        
+        # generate sample set
+        x = np.random.uniform(0, 1, size=100000)
+        
+        # lambda functions
+        l_x = lambda x: (1 - x * (1- l_max**(1 - mu)))**(1 / (1 - mu)) # l(r) function
+        P_l = lambda l: C * l ** (-mu) # levy flights distribution
+        
+        # get random numbers
+        l = l_x(x)
+        P = P_l(l)
+        
+        # plot data with histogram for distribution and the levy distribution as line plot
+        sns.histplot(l, bins=1000, stat='probability', label=f'$l(x), \mu={mu}$')
+        sns.lineplot(x=l, y=P, label=f'$P(l), \mu={mu}$')
+        plt.legend()
+    
+    plt.title(f'Random numbers distribution and Levy flights distribution')
+    plt.xlabel('Jump length, $l$')
+    plt.ylabel('Probability')
+    plt.show()
