@@ -54,85 +54,82 @@ def task1_1(n: int) -> None:
 
 ## Task 1.2
 
-def task1_2(T: list[list], N: int = 1000) -> None:
+def task1_2(T: list[int], N: int = 1000) -> None:
     """Solution of task 1.2."""
     
-    for tf in T:
+    # Sample probability - variable initialization
+    xmin = xmax = 0
+    ymin = ymax = 0
+    sample_probability = {}
+    tmp_prob = []
+    
+    for t in T:
+        trajectories = []
         
-        # Sample probability - variable initialization
-        xmin = xmax = 0
-        ymin = ymax = 0
-        sample_probability = {}
-        tmp_prob = []
+        # Generate trajectories
+        for _ in range(N):
+            trajectories.append(random_walk_2d(t))
+        # we need to get a range of values of x to verify
+        # can just look at last index value for each random walk and get minimum and maximum from it
+        finish_site = [(x_path[-1], y_path[-1]) for x_path, y_path in trajectories]
         
-        for t in tf:
-            trajectories = []
+        # interval for finish site check
+        for finish in finish_site:
+            xmin = min(xmin, finish[0])
+            ymin = min(ymin, finish[1])
             
-            # Generate trajectories
-            for _ in range(N):
-                trajectories.append(random_walk_2d(t))
-            # we need to get a range of values of x to verify
-            # can just look at last index value for each random walk and get minimum and maximum from it
-            finish_site = [trajectory[-1] for trajectory in trajectories]
-            
-            # interval for finish site check
-            for finish in finish_site:
-                xmin = min(xmin, finish[0])
-                ymin = min(ymin, finish[1])
-                
-                xmax = max(xmax, finish[0])
-                ymax = max(ymax, finish[1])
-            
-            occurrences = {(x, y): 0 for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1)} # initialization
-            
-            for key in occurrences:
-                occurrences[key] = sum([int(finish == key) for finish in finish_site]) # count number of occurrences of each finish site
-            
-            # print(occurrences)
-            tmp_prob.append({key: val/N for key, val in occurrences.items()})
-            
-        for x in range(xmin, xmax + 1):
-            for y in range(ymin, ymax + 1):
-                sample_probability[(x, y)] = (tmp_prob[0].get((x, y), 0) + tmp_prob[1].get((x, y), 0)) / 2 # sample average between the odd and even random walks
+            xmax = max(xmax, finish[0])
+            ymax = max(ymax, finish[1])
 
-        # # Theoretical probability
-        P = lambda x, y, t: np.exp(-(x**2 + y**2) / t) / (t * np.pi)  # define a lambda function P(x,t)
-        theory = {(x, y): P(x, y, t) for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1)}
-        
-        # normalization conditions
-        prob_cond = np.sum(list(sample_probability.values()))
-        
-        # mean values
-        mu_x = np.sum(list(map(lambda x, prob: x * prob, range(xmin, xmax + 1), sample_probability.values())))
-        mu_y = np.sum(list(map(lambda y, prob: y * prob, range(ymin, ymax + 1), sample_probability.values())))
-        
-        # variance
-        variance = np.sum([(key[0]**2 + key[1]**2) * probability for key, probability in sample_probability.items()])
-        
-        print(f"""Probability condition: {prob_cond}\n
-            Mean 0: {mu_x} = {mu_y}\n
-            Variance {np.mean(tf)}: {variance}
-            """)
-        
-        x = []
-        y = []
-        
-        for key in sample_probability.keys():
-            x.append(key[0])
-            y.append(key[1])
-        
-        # sample and theory 3d plot
-        seaborn_plot = plt.axes(projection = '3d')
+        occurrences = {(x, y): 0 for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1)} # initialization
 
-        seaborn_plot.plot3D(x, y, list(sample_probability.values()), label = 'Sample result', alpha = 0.4, linewidth=.5)
-        seaborn_plot.plot3D(x, y, list(theory.values()), label = 'Theoretical result', color='orange', alpha = 0.7, linewidth=1)
-        plt.grid()
-        plt.xlabel(r"$x$")
-        plt.ylabel(r"$y$")
-        seaborn_plot.set_zlabel(r"$\bar{P}(x,t)$")
-        plt.show()
+        for key in occurrences:
+            occurrences[key] = sum([int(finish == key) for finish in finish_site]) # count number of occurrences of each finish site
+        
+        # print(occurrences)
+        tmp_prob.append({key: val/N for key, val in occurrences.items()})
+        
+    for x in range(xmin, xmax + 1):
+        for y in range(ymin, ymax + 1):
+            sample_probability[(x, y)] = (tmp_prob[0].get((x, y), 0) + tmp_prob[1].get((x, y), 0)) / 2 # sample average between the odd and even random walks
 
-task1_2([[500,501]], 1000)
+    # # Theoretical probability
+    P = lambda x, y, t: np.exp(-(x**2 + y**2) / t) / (t * np.pi)  # define a lambda function P(x,t)
+    theory = {(x, y): P(x, y, t) for x in range(xmin, xmax + 1) for y in range(ymin, ymax + 1)}
+    
+    # normalization conditions
+    prob_cond = np.sum(list(sample_probability.values()))
+    
+    # mean values
+    mu_x = np.sum(list(map(lambda x, prob: x * prob, range(xmin, xmax + 1), sample_probability.values())))
+    mu_y = np.sum(list(map(lambda y, prob: y * prob, range(ymin, ymax + 1), sample_probability.values())))
+    
+    # variance
+    variance = np.sum([(key[0]**2 + key[1]**2) * probability for key, probability in sample_probability.items()])
+    
+    print(f"""Probability condition: {prob_cond}\n
+        Mean 0: {mu_x} = {mu_y}\n
+        Variance {np.mean(T)}: {variance}
+        """)
+    
+    x = []
+    y = []
+    
+    print(sample_probability)
+    for key in sample_probability.keys():
+        x.append(key[0])
+        y.append(key[1])
+    
+    # sample and theory 3d plot
+    seaborn_plot = plt.axes(projection = '3d')
+
+    seaborn_plot.plot3D(x, y, list(sample_probability.values()), label = 'Sample result', alpha = 0.4, linewidth=.5)
+    seaborn_plot.plot3D(x, y, list(theory.values()), label = 'Theoretical result', color='orange', alpha = 0.7, linewidth=1)
+    plt.grid()
+    plt.xlabel(r"$x$")
+    plt.ylabel(r"$y$")
+    seaborn_plot.set_zlabel(r"$\bar{P}(x,t)$")
+    plt.show()
 
 # Part 2
 ## Task 2.1
