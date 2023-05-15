@@ -286,6 +286,9 @@ def task3_1() -> None:
         levy_f = levy_flight(mu, l_max, N)
         sns.lineplot(x = levy_f[0], y = levy_f[1], marker = 'o', linestyle = 'dashed', label = f'Levy flight, $\mu={mu}$', alpha = 0.6)
     sns.lineplot(y = isotropic_rw[0], x = isotropic_rw[1], marker = 'o', linestyle = 'dashed', label = 'Isotropic random walk')
+    plt.xlabel('$x$')
+    plt.ylabel('$y$')
+    plt.title('Lévy flights with varying $\mu$')
     plt.legend()
     plt.show()
 
