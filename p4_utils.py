@@ -5,7 +5,9 @@
 # Modules
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm #progress bar
+import seaborn as sns
+
+sns.set_style('darkgrid')
 
 # Functions
 
@@ -53,18 +55,25 @@ def metropolis(N: int, T: float):
 def exact_magnetization(T):
     """Returns exact values of the magnetization"""
     H = 0.1
-    return np.sinh(H / T) / np.sqrt(np.sinh(H / T)**2 + np.exp((-4 * J) / T))
+    return np.sinh(H / T) / np.sqrt(np.sinh(H / T)**2 + np.exp((-4 * 1) / T))
 
+# EX 1
+
+# m function of T
 T = np.arange(0.1, 10.01, step = 0.05)
+m_sim = []
+m_theory = []
 
-m = []
-magnetization = []
+for temp in T:
+    m_sim.append(metropolis(1000, temp))
+    m_theory.append(exact_magnetization(temp))
 
-for k in tqdm(range(1, 101)):
-    for t in range(k*100 + 1):
-        m.append(metropolis(1000, np.random.choice(T, 1)))
-    magnetization.append(np.sum(m) / (k * 100))
-
-
-plt.plot(np.arange(1, 101)*100, magnetization)
+sns.lineplot(x=T, y=m_sim, label = 'Simulation')
+sns.lineplot(x=T, y=m_theory, label = 'Exact')
+plt.legend()
+plt.title('Mean magnetic moment vs Temperature')
+plt.ylabel('$m(H=0.1,T)$')
+plt.xlabel('Temperature $T$')
 plt.show()
+
+# EX 2
